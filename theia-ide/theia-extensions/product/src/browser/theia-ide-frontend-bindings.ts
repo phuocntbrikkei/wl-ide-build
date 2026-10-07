@@ -34,6 +34,7 @@ import { RikkeiAuthPreferenceSchema } from './auth/rikkei-auth-preferences';
 import { RikkeiCodeActivityContribution } from './auth/rikkei-code-activity';
 import { RikkeiClassroomService } from './classroom/rikkei-classroom-service';
 import { RikkeiClassroomContribution } from './classroom/rikkei-classroom-contribution';
+import { RikkeiVersionContribution } from './classroom/rikkei-version-contribution';
 
 /**
  * All product frontend bindings (branding, custom Getting Started / About,
@@ -113,6 +114,12 @@ export function bindTheiaIdeProductFrontend(
     if (!isBound(RikkeiClassroomContribution)) {
         bind(RikkeiClassroomContribution).toSelf().inSingletonScope();
         bind(FrontendApplicationContribution).toService(RikkeiClassroomContribution);
+    }
+
+    // Phiên bản tối thiểu do SC quy định: dưới mức thì chặn IDE, chỉ còn nút tải bản mới.
+    if (!isBound(RikkeiVersionContribution)) {
+        bind(RikkeiVersionContribution).toSelf().inSingletonScope();
+        bind(FrontendApplicationContribution).toService(RikkeiVersionContribution);
     }
 
     // Theo dõi hoạt động code (gửi JSONL về SC). An toàn với mở folder vì chỉ hook

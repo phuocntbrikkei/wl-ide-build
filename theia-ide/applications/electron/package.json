@@ -3,7 +3,7 @@
   "name": "theia-ide-electron-app",
   "description": "Rikkei Ide product",
   "productName": "Rikkei Ide",
-  "version": "1.73.100",
+  "version": "1.73.101",
   "main": "scripts/theia-electron-main.js",
   "license": "MIT",
   "author": "Rikkei Academy",

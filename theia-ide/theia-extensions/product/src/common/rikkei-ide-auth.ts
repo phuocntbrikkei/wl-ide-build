@@ -61,4 +61,10 @@ export interface RikkeiIdeAuthMain {
 
     /** Hỏi Rikkei LMS Connect đang ngoài giờ / giờ học / giờ thi. undefined = LMS Connect không chạy. */
     getLmsConnectStatus(): Promise<LmsConnectStatus | undefined>;
+
+    /** Phiên bản Rikkei Ide (package.json của app) + nền tảng tải: windows | mac-arm | mac-intel | linux. */
+    getAppInfo(): Promise<{ version: string; platform: string }>;
+
+    /** Mở link tải bản mới bằng trình duyệt hệ thống (chỉ http/https). */
+    openDownload(url: string): Promise<void>;
 }

@@ -6,7 +6,7 @@
  ********************************************************************************/
 
 import { injectable } from '@theia/core/shared/inversify';
-import { BrowserWindow, app } from '@theia/core/electron-shared/electron';
+import { BrowserWindow, app, shell } from '@theia/core/electron-shared/electron';
 import { promises as fs } from 'fs';
 import * as path from 'path';
 import * as http from 'http';
@@ -76,6 +76,19 @@ export class RikkeiIdeAuthMainImpl implements RikkeiIdeAuthMain {
             req.on('error', () => resolve(false));
             req.end(body);
         });
+    }
+
+    async getAppInfo(): Promise<{ version: string; platform: string }> {
+        const platform = process.platform === 'win32' ? 'windows'
+            : process.platform === 'darwin' ? (process.arch === 'arm64' ? 'mac-arm' : 'mac-intel')
+                : 'linux';
+        return { version: app.getVersion(), platform };
+    }
+
+    async openDownload(url: string): Promise<void> {
+        if (/^https?:\/\//i.test(url || '')) {
+            await shell.openExternal(url);
+        }
     }
 
     async getLmsConnectStatus(): Promise<LmsConnectStatus | undefined> {
