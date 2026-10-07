@@ -1,0 +1,33 @@
+{
+  "name": "sample-snippets",
+  "displayName": "Sample Code Snippets",
+  "description": "Boilerplate code snippets for C, C++, Java, and Python",
+  "version": "1.0.0",
+  "publisher": "resc",
+  "engines": {
+    "vscode": "^1.50.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "contributes": {
+    "snippets": [
+      {
+        "language": "c",
+        "path": "./snippets/c.json"
+      },
+      {
+        "language": "cpp",
+        "path": "./snippets/cpp.json"
+      },
+      {
+        "language": "java",
+        "path": "./snippets/java.json"
+      },
+      {
+        "language": "python",
+        "path": "./snippets/python.json"
+      }
+    ]
+  }
+}

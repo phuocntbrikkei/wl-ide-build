@@ -1,0 +1,12 @@
+﻿# Deps + output build (CI/local tu tao lai)
+**/node_modules/
+theia-ide/plugins/
+theia-ide/**/lib/
+theia-ide/**/dist/
+theia-ide/**/src-gen/
+theia-ide/**/.browser_modules/
+theia-ide/applications/electron/resources/java/
+theia-ide/applications/electron/resources/python/
+**/*.tsbuildinfo
+*.log
+.DS_Store

@@ -1,0 +1,202 @@
+name: Build Rikkei IDE
+
+# Repo wl-ide-build = chỉ Rikkei IDE (Theia/Electron). Client (Wails) build ở repo wl-build.
+# Chạy tay (Actions -> Run workflow) hoặc push tag vX.Y.Z để tự build + tạo Release.
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+# Tránh treo trong CI:
+# - NX_DAEMON=false: lerna/Nx KHÔNG chạy daemon (daemon hay treo trên runner).
+# - COREPACK_ENABLE_DOWNLOAD_PROMPT=0: corepack không hỏi Y/n khi tải yarn.
+env:
+  NX_DAEMON: "false"
+  COREPACK_ENABLE_DOWNLOAD_PROMPT: "0"
+  CI: "true"
+
+jobs:
+  # ---------------- RIKKEI IDE — Windows ----------------
+  ide-windows:
+    timeout-minutes: 60
+    # windows-2022 có sẵn Visual Studio 2022 + C++ toolset (node-gyp tìm được).
+    # windows-latest đã chuyển sang image windows-2025 khiến node-gyp không dò ra VS.
+    runs-on: windows-2022
+    env:
+      GYP_MSVS_VERSION: "2022"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Bật long paths
+        run: git config --system core.longpaths true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "yarn"
+          cache-dependency-path: theia-ide/yarn.lock
+      - run: corepack enable
+      - name: Cache plugins + JRE + Python
+        uses: actions/cache@v4
+        with:
+          path: |
+            theia-ide/plugins
+            theia-ide/applications/electron/resources/java
+            theia-ide/applications/electron/resources/python
+          key: theia-runtime-windows-${{ hashFiles('theia-ide/package.json') }}
+      - name: yarn install
+        working-directory: theia-ide
+        # KHÔNG dùng --ignore-optional: nó bỏ cả @nx/nx-win32-x64-msvc (native của
+        # Nx, là optionalDependency) -> lerna build:extensions fail. windows-2022
+        # có Visual Studio nên các native (cpu-features, drivelist...) compile được.
+        run: yarn install --network-timeout 600000
+      - name: download plugins/python/java
+        working-directory: theia-ide
+        run: |
+          yarn download:plugins
+          yarn download:python
+          yarn download:java
+      - name: build:extensions
+        working-directory: theia-ide
+        run: yarn build:extensions
+      - name: theia build
+        working-directory: theia-ide/applications/electron
+        run: npx theia build --app-target=electron
+      - name: electron-builder (win)
+        working-directory: theia-ide/applications/electron
+        run: npx electron-builder --win --publish never
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ide-windows
+          path: |
+            theia-ide/applications/electron/dist/*.exe
+            theia-ide/applications/electron/dist/*.zip
+          if-no-files-found: warn
+
+  # ---------------- RIKKEI IDE — macOS (arm64 + Intel) ----------------
+  ide-macos:
+    timeout-minutes: 75
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-14
+            name: arm64
+            ebArgs: "--mac --arm64"
+          - os: macos-13
+            name: intel
+            ebArgs: "--mac --x64"
+    runs-on: ${{ matrix.os }}
+    env:
+      CSC_IDENTITY_AUTO_DISCOVERY: "false"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "yarn"
+          cache-dependency-path: theia-ide/yarn.lock
+      - run: corepack enable
+      - name: Cache plugins + JRE + Python
+        uses: actions/cache@v4
+        with:
+          path: |
+            theia-ide/plugins
+            theia-ide/applications/electron/resources/java
+            theia-ide/applications/electron/resources/python
+          key: theia-runtime-macos-${{ matrix.name }}-${{ hashFiles('theia-ide/package.json') }}
+      - name: yarn install
+        working-directory: theia-ide
+        run: yarn install --network-timeout 600000
+      - name: download plugins/python/java
+        working-directory: theia-ide
+        run: |
+          yarn download:plugins
+          yarn download:python
+          yarn download:java
+      - name: build:extensions
+        working-directory: theia-ide
+        run: yarn build:extensions
+      - name: theia build
+        working-directory: theia-ide/applications/electron
+        run: npx theia build --app-target=electron
+      - name: electron-builder (mac)
+        working-directory: theia-ide/applications/electron
+        run: npx electron-builder ${{ matrix.ebArgs }} --publish never
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ide-macos-${{ matrix.name }}
+          path: |
+            theia-ide/applications/electron/dist/*.dmg
+          if-no-files-found: warn
+
+  # ---------------- RIKKEI IDE — Linux (AppImage + deb) ----------------
+  ide-linux:
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cài deps build native + AppImage (Linux)
+        # native-keymap cần libx11/libxkbfile; keytar cần libsecret; AppImage cần libfuse2.
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential pkg-config libx11-dev libxkbfile-dev libsecret-1-dev libfuse2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "yarn"
+          cache-dependency-path: theia-ide/yarn.lock
+      - run: corepack enable
+      - name: Cache plugins + JRE + Python
+        uses: actions/cache@v4
+        with:
+          path: |
+            theia-ide/plugins
+            theia-ide/applications/electron/resources/java
+            theia-ide/applications/electron/resources/python
+          key: theia-runtime-linux-${{ hashFiles('theia-ide/package.json') }}
+      - name: yarn install
+        working-directory: theia-ide
+        run: yarn install --network-timeout 600000
+      - name: download plugins/python/java
+        working-directory: theia-ide
+        run: |
+          yarn download:plugins
+          yarn download:python
+          yarn download:java
+      - name: build:extensions
+        working-directory: theia-ide
+        run: yarn build:extensions
+      - name: theia build
+        working-directory: theia-ide/applications/electron
+        run: npx theia build --app-target=electron
+      - name: electron-builder (linux, AppImage)
+        working-directory: theia-ide/applications/electron
+        # Chỉ AppImage (chạy mọi distro). .deb đòi maintainer email -> bỏ cho gọn;
+        # cần .deb thì thêm `linux.maintainer` trong electron-builder.yml.
+        run: npx electron-builder --linux AppImage --publish never
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ide-linux
+          path: |
+            theia-ide/applications/electron/dist/*.AppImage
+          if-no-files-found: warn
+
+  # ---------------- RELEASE (chỉ khi push tag vX.Y.Z) ----------------
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [ide-windows, ide-macos, ide-linux]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: Gộp file
+        run: |
+          mkdir -p release
+          find artifacts -type f \( -name '*.exe' -o -name '*.dmg' -o -name '*.zip' -o -name '*.AppImage' -o -name '*.deb' -o -name '*.tar.gz' \) -exec cp {} release/ \;
+          ls -la release
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: release/*
+          generate_release_notes: true

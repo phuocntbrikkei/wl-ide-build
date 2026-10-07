@@ -1,0 +1,13 @@
+﻿* text=auto eol=lf
+*.patch text eol=lf
+*.sh text eol=lf
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ico binary
+*.icns binary
+*.bmp binary
+*.woff binary
+*.woff2 binary
+*.gz binary
+*.zip binary

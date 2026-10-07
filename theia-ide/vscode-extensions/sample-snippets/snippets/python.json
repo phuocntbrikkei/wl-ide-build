@@ -1,0 +1,9 @@
+{
+  "Python Boilerplate": {
+    "prefix": ["python", "py"],
+    "body": [
+      "print(\"Hello, World!\")"
+    ],
+    "description": "Boilerplate code for Python"
+  }
+}

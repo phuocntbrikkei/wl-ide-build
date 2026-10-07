@@ -1,0 +1,92 @@
+appId: com.rikkei.ide
+productName: "Rikkei Ide"
+copyright: Copyright © Rikkei Academy
+electronDist: ../../node_modules/electron/dist
+electronVersion: 42.3.0
+asar: true
+asarUnpack:
+  - "**/lib/backend/native/**"
+  - "**/lib/backend/shell-integrations/**"
+  - "**/lib/prebuilds/**"
+nodeGypRebuild: false
+npmRebuild: false
+
+directories:
+  buildResources: resources
+
+# node_modules and package.json are copied automatically
+# Exclude node_modules manually because electron is copied by electron-builder and we are using a bundled backend
+files:
+  - src-gen
+  - lib
+  - resources/icons/WindowIcon/512-512.png
+  - resources/RESCIDESplash.png
+  - resources/RESCIDESplash.html
+  - resources/TheiaIDESplash.svg
+  - scripts
+  - "!**node_modules/**"
+extraResources:
+  - from: ../../plugins
+    to: app/plugins
+  - from: resources/python
+    to: app/python
+  - from: resources/java
+    to: app/java
+
+win:
+  icon: resources/icons/WindowsLauncherIcons/TheiaIDE.ico
+  target:
+    - nsis
+    - zip
+  publish:
+    provider: generic
+    url: "https://download.eclipse.org/theia/ide/${version}/windows"
+    useMultipleRangeRequest: false
+mac:
+  icon: resources/icons/MacLauncherIcons/icon.icns
+  category: public.app-category.developer-tools
+  protocols:
+    - name: rescide
+      schemes:
+        - rescide
+  darkModeSupport: true
+  target:
+    - dmg
+    - zip
+  publish:
+    provider: generic
+    url: "https://download.eclipse.org/theia/ide/latest/macos"
+linux:
+  icon: resources/icons/LinuxLauncherIcons
+  category: Development
+  mimeTypes:
+    - inode/directory
+  vendor: RE SC IDE
+  target:
+    - deb
+    - AppImage
+  publish:
+    provider: generic
+    url: "https://download.eclipse.org/theia/ide/latest/linux"
+
+nsis:
+  menuCategory: true
+  oneClick: false
+  perMachine: false
+  installerHeaderIcon: resources/icons/WindowsLauncherIcons/TheiaIDE.ico
+  installerIcon: resources/icons/WindowsLauncherIcons/TheiaIDE.ico
+  uninstallerIcon: resources/icons/WindowsLauncherIcons/TheiaIDE.ico
+  installerSidebar: resources/icons/InstallerSidebarImage/164-314Windows.bmp
+  uninstallerSidebar: resources/icons/InstallerSidebarImage/164-314Windows.bmp
+  allowToChangeInstallationDirectory: true
+  runAfterFinish: false
+  artifactName: ${productName} Setup.${ext}
+  license: LICENSE
+dmg:
+  artifactName: ${productName}.${ext}
+deb:
+  artifactName: ${productName}.${ext}
+appImage:
+  artifactName: ${productName}.${ext}
+
+afterPack: ./scripts/after-pack.js

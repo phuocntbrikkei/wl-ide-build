@@ -1,0 +1,13 @@
+{
+  "Java Boilerplate": {
+    "prefix": "java",
+    "body": [
+      "public class Main {",
+      "    public static void main(String[] args) {",
+      "        System.out.println(\"Hello, World!\");",
+      "    }",
+      "}"
+    ],
+    "description": "Boilerplate code for Java"
+  }
+}
